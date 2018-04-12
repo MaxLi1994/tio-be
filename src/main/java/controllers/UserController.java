@@ -114,7 +114,7 @@ public class UserController extends BaseController {
      * @apiName changeNickname
      * @apiGroup user
      *
-     * @apiParam {String} user_id Current user's id.
+     * @apiParam {String} userId Current user's id.
      * @apiParam {String} newNickname User input new nickname.
      *
      * @apiSuccessExample {json} Success-Response:
@@ -125,25 +125,25 @@ public class UserController extends BaseController {
      * }
      * @apiError {Json} 1 User didn't complete all fields.
      * @apiError {Json} 2 User input is empty string or whitespaces.
-     * @apiError {Json} 3 User_id must be an integer.
+     * @apiError {Json} 3 userId must be an integer.
      * @apiError {Json} 4 Provided user id is not found in the database.
      */
     @Before(POST.class)
     public void changeNickname() {
-        String user_idStr = getPara("user_id");
+        String userIdStr = getPara("userId");
         String newNickname = getPara("newNickname");
-        if (user_idStr == null || newNickname == null) {
+        if (userIdStr == null || newNickname == null) {
             setAttr("code", -1);
             setAttr("msg", "Lack input.");
-        } else if (user_idStr.trim().equals("") || newNickname.trim().equals("")) {
+        } else if (userIdStr.trim().equals("") || newNickname.trim().equals("")) {
             setAttr("code", -1);
             setAttr("msg", "User input cannot be empty string or pure whitespaces.");
         } else {
             boolean success = true;
-            int user_id = 0;
+            int userId = 0;
             try {
-                System.out.println(user_idStr);
-                user_id = Integer.parseInt(user_idStr);
+                System.out.println(userIdStr);
+                userId = Integer.parseInt(userIdStr);
             } catch (NumberFormatException e) {
                 System.out.println("not success");
                 success = false;
@@ -152,7 +152,7 @@ public class UserController extends BaseController {
                 setAttr("code", -1);
                 setAttr("msg", "User id must be an Integer.");
             } else {
-                User myUser = User.dao.findById(user_id);
+                User myUser = User.dao.findById(userId);
                 if (myUser == null) {
                     setAttr("code", -1);
                     setAttr("msg", "User not found.");
@@ -172,7 +172,7 @@ public class UserController extends BaseController {
      * @apiName changePassword
      * @apiGroup user
      *
-     * @apiParam {String} user_id Current user's id.
+     * @apiParam {String} userId Current user's id.
      * @apiParam {String} oldPassword User input old password.
      * @apiParam {String} newPassword User input new password.
      *
@@ -184,27 +184,27 @@ public class UserController extends BaseController {
      * @apiError {Json} 1 User didn't complete all fields.
      * @apiError {Json} 2 User input is empty string or whitespaces.
      * @apiError {Json} 3 Provided user id is not found in the database.
-     * @apiError {Json} 4 User_id must be an integer.
+     * @apiError {Json} 4 userId must be an integer.
      * @apiError {Json} 5 Provided user id is not found in the database.
      * @apiError {Json} 6 User input old password is not compatible with database record.
      */
     @Before(POST.class)
     public void changePassword() {
-        String user_idStr = getPara("user_id");
+        String userIdStr = getPara("userId");
         String oldPassword = getPara("oldPassword");
         String newPassword = getPara("newPassword");
 
-        if (user_idStr == null || oldPassword == null || newPassword == null) {
+        if (userIdStr == null || oldPassword == null || newPassword == null) {
             setAttr("code", -1);
             setAttr("msg", "Lack input");
-        } else if (user_idStr.trim().equals("") || oldPassword.trim().equals("") || newPassword.trim().equals("")) {
+        } else if (userIdStr.trim().equals("") || oldPassword.trim().equals("") || newPassword.trim().equals("")) {
             setAttr("code", -1);
             setAttr("msg", "User input cannot be empty string or pure whitespaces.");
         } else {
             boolean success = true;
-            int user_id = 0;
+            int userId = 0;
             try {
-                user_id = Integer.parseInt(user_idStr);
+                userId = Integer.parseInt(userIdStr);
             } catch (NumberFormatException e) {
                 success = false;
             }
@@ -212,7 +212,7 @@ public class UserController extends BaseController {
                 setAttr("code", -1);
                 setAttr("msg", "User id must be an Integer.");
             } else {
-                User myUser = User.dao.findById(user_id);
+                User myUser = User.dao.findById(userId);
                 if (myUser == null) {
                     setAttr("code", -1);
                     setAttr("msg", "User not found");
