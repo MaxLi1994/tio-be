@@ -10,4 +10,8 @@ public class HelloWorldController extends Controller {
     public void index() {
         renderText("Hello Maven JFinal!");
     }
+
+    public void test() {
+        redirect("http://google.com");
+    }
 }
