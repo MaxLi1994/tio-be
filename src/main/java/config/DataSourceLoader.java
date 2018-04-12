@@ -1,4 +1,4 @@
-package tio_be.config;
+package config;
 
 import com.alibaba.druid.wall.WallFilter;
 import com.jfinal.plugin.druid.DruidPlugin;

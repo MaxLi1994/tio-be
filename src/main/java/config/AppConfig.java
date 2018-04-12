@@ -1,13 +1,13 @@
-package tio_be.config;
+package config;
 
-import Models.*;
+import interceptors.ResponseInterceptor;
+import models.*;
 import com.jfinal.config.*;
 import com.jfinal.core.JFinal;
 import com.jfinal.kit.PropKit;
 import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
 import com.jfinal.plugin.druid.DruidPlugin;
 import com.jfinal.template.Engine;
-import controllers.HelloWorldController;
 import controllers.UserController;
 
 /**
@@ -17,7 +17,7 @@ public class AppConfig extends JFinalConfig {
 
     public static void main(String[] args) {
         // Launching under IDEA environment
-        JFinal.start("src/main/webapp", 80, "/");
+        JFinal.start("src/main/webapp", 3000, "/");
     }
 
     @Override
@@ -27,7 +27,6 @@ public class AppConfig extends JFinalConfig {
 
     @Override
     public void configRoute(Routes me) {
-        me.add("/hello", HelloWorldController.class);
         me.add("/user", UserController.class);
     }
 
@@ -53,7 +52,9 @@ public class AppConfig extends JFinalConfig {
     }
 
     @Override
-    public void configInterceptor(Interceptors me) {}
+    public void configInterceptor(Interceptors me) {
+        me.addGlobalActionInterceptor(new ResponseInterceptor());
+    }
 
     @Override
     public void configHandler(Handlers me) {}
