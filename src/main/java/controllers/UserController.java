@@ -12,7 +12,7 @@ import javax.mail.internet.InternetAddress;
 /**
  * @author Jieying Xu
  */
-public class UserController extends Controller {
+public class UserController extends BaseController {
 
     /**
      * @api {post} /user/createAccount Create a new user account
@@ -93,23 +93,18 @@ public class UserController extends Controller {
         String account = getPara("account");
         String password = getPara("password");
         if (account == null || password == null) {
-            setAttr("code", -1);
-            setAttr("msg", "Lack input.");
+            errorResponse("Lack input");
         } else if (account.trim().equals("") || password.trim().equals("")) {
-            setAttr("code", -1);
-            setAttr("msg", "User input cannot be empty string or pure whitespaces.");
+            errorResponse("User input cannot be empty string or pure whitespaces.");
         } else {
             User myUser = User.dao.findFirst("select * from user where account=? AND password=?", account, password);
             if (myUser == null) {
-                setAttr("code", -1);
-                setAttr("msg", "Account/Password combination doesn't exist.");
+                errorResponse("Account/Password combination doesn't exist.");
             } else {
                 myUser.remove("password");
-                setAttr("code", 0);
-                setAttr("data", myUser);
+                successResponse(myUser);
             }
         }
-        renderJson();
     }
 
     /**
