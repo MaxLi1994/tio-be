@@ -1,6 +1,6 @@
 package controllers;
 
-import Models.User;
+import models.User;
 import com.jfinal.aop.Before;
 import com.jfinal.core.Controller;
 import com.jfinal.ext.interceptor.POST;

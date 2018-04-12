@@ -1,6 +1,6 @@
-package tio_be.config;
+package config;
 
-import Models.*;
+import models.*;
 import com.jfinal.config.*;
 import com.jfinal.core.JFinal;
 import com.jfinal.kit.PropKit;
