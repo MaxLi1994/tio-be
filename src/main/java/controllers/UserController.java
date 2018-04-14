@@ -1,10 +1,13 @@
 package controllers;
 
+import annotations.ValidatePara;
 import models.User;
 import com.jfinal.aop.Before;
-import com.jfinal.core.Controller;
 import com.jfinal.ext.interceptor.GET;
 import com.jfinal.ext.interceptor.POST;
+import validators.EmptyStringValidator;
+import validators.NullValidator;
+
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 
@@ -35,20 +38,16 @@ public class UserController extends BaseController {
      * @apiError {Msg} 4 Account is not a valid email address.
      */
     @Before(POST.class)
+    @ValidatePara(value = "account", validators = {NullValidator.class, EmptyStringValidator.class})
+    @ValidatePara(value = "nickname", validators = {NullValidator.class, EmptyStringValidator.class})
+    @ValidatePara(value = "password", validators = {NullValidator.class, EmptyStringValidator.class})
     public void createAccount() {
         String account = getPara("account");
         String nickname = getPara("nickname");
         String password = getPara("password");
 
-        if (account == null || nickname == null || password == null) {
-            setAttr("code", -1);
-            setAttr("msg", "Lack input");
-        } else if (account.trim().equals("") || nickname.trim().equals("") || password.trim().equals("")) {
-            setAttr("code", -1);
-            setAttr("msg", "User input cannot be empty string or pure whitespaces.");
-        } else if (User.dao.findFirst("select * from user where account=?", account) != null) {
-            setAttr("code", -1);
-            setAttr("msg", "User already existed.");
+        if (User.dao.findFirst("select * from user where account=?", account) != null) {
+            errorResponse("User already existed!");
         } else {
             boolean result = true;
             try {
@@ -59,17 +58,14 @@ public class UserController extends BaseController {
             }
 
             if (!result) {
-                setAttr("code", -1);
-                setAttr("msg", "Illegal email address.");
+                errorResponse("Illegal email address!");
             } else {
                 User newUser = new User();
                 newUser.set("account", account).set("nickname", nickname).set("password", password).save();
-                setAttr("code", 0);
                 newUser.remove("password");
-                setAttr("data", newUser); // remove password field
+                successResponse(newUser);
             }
         }
-        renderJson();
     }
 
     /**
@@ -91,21 +87,18 @@ public class UserController extends BaseController {
      * @apiError {Msg} 3 User input doesn't correspond to any database record.
      */
     @Before(GET.class)
+    @ValidatePara(value = "account", validators = {NullValidator.class, EmptyStringValidator.class})
+    @ValidatePara(value = "password", validators = {NullValidator.class, EmptyStringValidator.class})
     public void login() {
         String account = getPara("account");
         String password = getPara("password");
-        if (account == null || password == null) {
-            errorResponse("Lack input");
-        } else if (account.trim().equals("") || password.trim().equals("")) {
-            errorResponse("User input cannot be empty string or pure whitespaces.");
+        User myUser = User.dao.findFirst("select * from user where account=? AND password=?", account, password);
+        if (myUser == null) {
+            System.out.println("UserController 97");
+            errorResponse("Account/Password combination doesn't exist!");
         } else {
-            User myUser = User.dao.findFirst("select * from user where account=? AND password=?", account, password);
-            if (myUser == null) {
-                errorResponse("Account/Password combination doesn't exist.");
-            } else {
-                myUser.remove("password");
-                successResponse(myUser);
-            }
+            myUser.remove("password");
+            successResponse(myUser);
         }
     }
 
@@ -129,42 +122,31 @@ public class UserController extends BaseController {
      * @apiError {Json} 4 Provided user id is not found in the database.
      */
     @Before(POST.class)
+    @ValidatePara(value = "userId", validators = {NullValidator.class, EmptyStringValidator.class})
+    @ValidatePara(value = "newNickname", validators = {NullValidator.class, EmptyStringValidator.class})
     public void changeNickname() {
         String userIdStr = getPara("userId");
         String newNickname = getPara("newNickname");
-        if (userIdStr == null || newNickname == null) {
-            setAttr("code", -1);
-            setAttr("msg", "Lack input.");
-        } else if (userIdStr.trim().equals("") || newNickname.trim().equals("")) {
-            setAttr("code", -1);
-            setAttr("msg", "User input cannot be empty string or pure whitespaces.");
+
+        boolean success = true;
+        int userId = 0;
+        try {
+            userId = Integer.parseInt(userIdStr);
+        } catch (NumberFormatException e) {
+            success = false;
+        }
+        if (!success) {
+            errorResponse("User id must be an Integer!");
         } else {
-            boolean success = true;
-            int userId = 0;
-            try {
-                System.out.println(userIdStr);
-                userId = Integer.parseInt(userIdStr);
-            } catch (NumberFormatException e) {
-                System.out.println("not success");
-                success = false;
-            }
-            if (!success) {
-                setAttr("code", -1);
-                setAttr("msg", "User id must be an Integer.");
+            User myUser = User.dao.findById(userId);
+            if (myUser == null) {
+                errorResponse("User not found!");
             } else {
-                User myUser = User.dao.findById(userId);
-                if (myUser == null) {
-                    setAttr("code", -1);
-                    setAttr("msg", "User not found.");
-                } else {
-                    myUser.set("nickname", newNickname).update();
-                    myUser.remove("password");
-                    setAttr("code", 0);
-                    setAttr("data", myUser);
-                }
+                myUser.set("nickname", newNickname).update();
+                myUser.remove("password");
+                successResponse(myUser);
             }
         }
-        renderJson();
     }
 
     /**
@@ -189,48 +171,35 @@ public class UserController extends BaseController {
      * @apiError {Json} 6 User input old password is not compatible with database record.
      */
     @Before(POST.class)
+    @ValidatePara(value = "userId", validators = {NullValidator.class, EmptyStringValidator.class})
+    @ValidatePara(value = "oldPassword", validators = {NullValidator.class, EmptyStringValidator.class})
+    @ValidatePara(value = "newPassword", validators = {NullValidator.class, EmptyStringValidator.class})
     public void changePassword() {
         String userIdStr = getPara("userId");
         String oldPassword = getPara("oldPassword");
         String newPassword = getPara("newPassword");
-
-        if (userIdStr == null || oldPassword == null || newPassword == null) {
-            setAttr("code", -1);
-            setAttr("msg", "Lack input");
-        } else if (userIdStr.trim().equals("") || oldPassword.trim().equals("") || newPassword.trim().equals("")) {
-            setAttr("code", -1);
-            setAttr("msg", "User input cannot be empty string or pure whitespaces.");
+        boolean success = true;
+        int userId = 0;
+        try {
+            userId = Integer.parseInt(userIdStr);
+        } catch (NumberFormatException e) {
+            success = false;
+        }
+        if (!success) {
+            errorResponse("User id must be an Integer!");
         } else {
-            boolean success = true;
-            int userId = 0;
-            try {
-                userId = Integer.parseInt(userIdStr);
-            } catch (NumberFormatException e) {
-                success = false;
-            }
-            if (!success) {
-                setAttr("code", -1);
-                setAttr("msg", "User id must be an Integer.");
+            User myUser = User.dao.findById(userId);
+            if (myUser == null) {
+                errorResponse("User not found!");
             } else {
-                User myUser = User.dao.findById(userId);
-                if (myUser == null) {
-                    setAttr("code", -1);
-                    setAttr("msg", "User not found");
+                String userOldPassword = myUser.getStr("password");
+                if (!userOldPassword.equals(oldPassword)) {
+                    errorResponse("Password not compatible!");
                 } else {
-                    String userOldPassword = myUser.getStr("password");
-                    if (!userOldPassword.equals(oldPassword)) {
-                        setAttr("code", -1);
-                        setAttr("msg", "Password not compatible.");
-                    } else {
-                        myUser.set("password", newPassword).update();
-                        setAttr("code", 0);
-                        setAttr("msg", "Password successfully reset.");
-                    }
+                    myUser.set("password", newPassword).update();
+                    successResponse("Password successfully reset!");
                 }
             }
         }
-        renderJson();
     }
-
-
 }

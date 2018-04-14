@@ -1,5 +1,6 @@
 package config;
 
+import interceptors.ParaValidateInterceptor;
 import interceptors.ResponseInterceptor;
 import models.*;
 import com.jfinal.config.*;
@@ -53,6 +54,7 @@ public class AppConfig extends JFinalConfig {
 
     @Override
     public void configInterceptor(Interceptors me) {
+        me.addGlobalActionInterceptor(new ParaValidateInterceptor());
         me.addGlobalActionInterceptor(new ResponseInterceptor());
     }
 

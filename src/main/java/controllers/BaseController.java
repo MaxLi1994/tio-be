@@ -10,8 +10,6 @@ import static config.Const.*;
 public class BaseController extends Controller {
     private Map<String, Object> responseObj = new HashMap<>();
 
-
-
     public void successResponse(Object response) {
         setAttr("data", response);
         setAttr("code", CODE_SUCCESS);
@@ -24,6 +22,8 @@ public class BaseController extends Controller {
     }
 
     public void errorResponse(String message) {
+        System.out.println("BaseController 25");
+        System.out.println("errMsg: " + message);
         setAttr("msg", message);
         setAttr("code", CODE_ERROR);
     }

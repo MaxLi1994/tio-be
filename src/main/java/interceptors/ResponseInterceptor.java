@@ -1,16 +1,22 @@
 package interceptors;
 
+import annotations.ValidatePara;
 import com.jfinal.aop.Interceptor;
 import com.jfinal.aop.Invocation;
 import com.jfinal.core.Controller;
 import config.Const;
+import validators.AbstractValidator;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ResponseInterceptor implements Interceptor {
     @Override
     public void intercept(Invocation invocation) {
+        System.out.println("before invocation");
         invocation.invoke();
 
         Controller c = invocation.getController();
@@ -21,12 +27,14 @@ public class ResponseInterceptor implements Interceptor {
             case Const.CODE_ERROR:
                 result.put("code", code);
                 result.put("msg", c.getAttr("msg"));
+                System.out.println(result);
                 break;
             case Const.CODE_SUCCESS:
                 result.put("code", code);
                 result.put("data", c.getAttr("data"));
                 break;
         }
+        System.out.println("reponseInterceptor 36 before render");
         c.renderJson(result);
     }
 }
