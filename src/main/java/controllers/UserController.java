@@ -6,7 +6,9 @@ import com.jfinal.aop.Before;
 import com.jfinal.ext.interceptor.GET;
 import com.jfinal.ext.interceptor.POST;
 import validators.EmptyStringValidator;
+import validators.IntegerFormatValidator;
 import validators.NullValidator;
+import validators.UserRecordExistValidator;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -94,7 +96,6 @@ public class UserController extends BaseController {
         String password = getPara("password");
         User myUser = User.dao.findFirst("select * from user where account=? AND password=?", account, password);
         if (myUser == null) {
-            System.out.println("UserController 97");
             errorResponse("Account/Password combination doesn't exist!");
         } else {
             myUser.remove("password");
@@ -122,31 +123,15 @@ public class UserController extends BaseController {
      * @apiError {Json} 4 Provided user id is not found in the database.
      */
     @Before(POST.class)
-    @ValidatePara(value = "userId", validators = {NullValidator.class, EmptyStringValidator.class})
+    @ValidatePara(value = "userId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, UserRecordExistValidator.class})
     @ValidatePara(value = "newNickname", validators = {NullValidator.class, EmptyStringValidator.class})
     public void changeNickname() {
         String userIdStr = getPara("userId");
         String newNickname = getPara("newNickname");
-
-        boolean success = true;
-        int userId = 0;
-        try {
-            userId = Integer.parseInt(userIdStr);
-        } catch (NumberFormatException e) {
-            success = false;
-        }
-        if (!success) {
-            errorResponse("User id must be an Integer!");
-        } else {
-            User myUser = User.dao.findById(userId);
-            if (myUser == null) {
-                errorResponse("User not found!");
-            } else {
-                myUser.set("nickname", newNickname).update();
-                myUser.remove("password");
-                successResponse(myUser);
-            }
-        }
+        User myUser = User.dao.findById(Integer.parseInt(userIdStr));
+        myUser.set("nickname", newNickname).update();
+        myUser.remove("password");
+        successResponse(myUser);
     }
 
     /**
@@ -171,35 +156,21 @@ public class UserController extends BaseController {
      * @apiError {Json} 6 User input old password is not compatible with database record.
      */
     @Before(POST.class)
-    @ValidatePara(value = "userId", validators = {NullValidator.class, EmptyStringValidator.class})
+    @ValidatePara(value = "userId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, UserRecordExistValidator.class})
     @ValidatePara(value = "oldPassword", validators = {NullValidator.class, EmptyStringValidator.class})
     @ValidatePara(value = "newPassword", validators = {NullValidator.class, EmptyStringValidator.class})
     public void changePassword() {
         String userIdStr = getPara("userId");
         String oldPassword = getPara("oldPassword");
         String newPassword = getPara("newPassword");
-        boolean success = true;
-        int userId = 0;
-        try {
-            userId = Integer.parseInt(userIdStr);
-        } catch (NumberFormatException e) {
-            success = false;
-        }
-        if (!success) {
-            errorResponse("User id must be an Integer!");
+        User myUser = User.dao.findById(Integer.parseInt(userIdStr));
+
+        String userOldPassword = myUser.getStr("password");
+        if (!userOldPassword.equals(oldPassword)) {
+            errorResponse("Password not compatible!");
         } else {
-            User myUser = User.dao.findById(userId);
-            if (myUser == null) {
-                errorResponse("User not found!");
-            } else {
-                String userOldPassword = myUser.getStr("password");
-                if (!userOldPassword.equals(oldPassword)) {
-                    errorResponse("Password not compatible!");
-                } else {
-                    myUser.set("password", newPassword).update();
-                    successResponse("Password successfully reset!");
-                }
-            }
+            myUser.set("password", newPassword).update();
+            successResponse("Password successfully reset!");
         }
     }
 }
