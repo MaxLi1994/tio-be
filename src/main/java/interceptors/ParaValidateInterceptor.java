@@ -43,6 +43,5 @@ public class ParaValidateInterceptor implements Interceptor{
             }
         }
         invocation.invoke();
-        System.out.println("finish parameter validation");
     }
 }

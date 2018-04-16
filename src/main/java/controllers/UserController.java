@@ -1,14 +1,12 @@
 package controllers;
 
 import annotations.ValidatePara;
+import models.TpUser;
 import models.User;
 import com.jfinal.aop.Before;
 import com.jfinal.ext.interceptor.GET;
 import com.jfinal.ext.interceptor.POST;
-import validators.EmptyStringValidator;
-import validators.IntegerFormatValidator;
-import validators.NullValidator;
-import validators.UserRecordExistValidator;
+import validators.*;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -30,9 +28,12 @@ public class UserController extends BaseController {
      * @apiParam {String} password User password.
      * @apiSuccessExample {json} Success-Response:
      * {
-     *     "nickname": string,
-     *     "account": string,
-     *     "id": int
+     *    "code": 0,
+     *    "data": {
+     *        "nickname": "jieying",
+     *        "id": 2,
+     *        "account": "jieyingx@andrew.cmu.edu"
+     *       }
      * }
      * @apiError {Msg} 1 User didn't complete all fields.
      * @apiError {Msg} 2 User input is empty string or whitespaces.
@@ -71,7 +72,7 @@ public class UserController extends BaseController {
     }
 
     /**
-     * @api {get} /user/login Check user input info with database record before log in
+     * @api {get} /user/login Check user info with database record to log in
      * @apiName login
      * @apiGroup user
      *
@@ -80,9 +81,12 @@ public class UserController extends BaseController {
      *
      * @apiSuccessExample {json} Success-Response:
      * {
-     *     "account": string,
-     *     "nickname": string,
-     *     "id": int
+     *    "code": 0,
+     *    "data": {
+     *        "nickname": "jieying",
+     *        "id": 2,
+     *        "account": "jieyingx@andrew.cmu.edu"
+     *       }
      * }
      * @apiError {Msg} 1 User didn't complete all fields.
      * @apiError {Msg} 2 User input is empty string or whitespaces.
@@ -104,7 +108,7 @@ public class UserController extends BaseController {
     }
 
     /**
-     * @api {post} /user/changeNickname Change the user's nickname given his/her id.
+     * @api {post} /user/changeNickname Change nickname given user id.
      * @apiName changeNickname
      * @apiGroup user
      *
@@ -113,9 +117,12 @@ public class UserController extends BaseController {
      *
      * @apiSuccessExample {json} Success-Response:
      * {
-     *     "account": string,
-     *     "nickname": string,
-     *     "id": int
+     *    "code": 0,
+     *    "data": {
+     *        "nickname": "jieying",
+     *        "id": 2,
+     *        "account": "jieyingx@andrew.cmu.edu"
+     *       }
      * }
      * @apiError {Json} 1 User didn't complete all fields.
      * @apiError {Json} 2 User input is empty string or whitespaces.
@@ -135,7 +142,7 @@ public class UserController extends BaseController {
     }
 
     /**
-     * @api {post} /user/changePassword Change the user's password given his/her id.
+     * @api {post} /user/changePassword Change password given user id.
      * @apiName changePassword
      * @apiGroup user
      *
@@ -145,7 +152,8 @@ public class UserController extends BaseController {
      *
      * @apiSuccessExample {json} Success-Response:
      * {
-     *     "msg": string
+     *    "code": 0,
+     *    "msg": String
      * }
      *
      * @apiError {Json} 1 User didn't complete all fields.
@@ -172,5 +180,75 @@ public class UserController extends BaseController {
             myUser.set("password", newPassword).update();
             successResponse("Password successfully reset!");
         }
+    }
+
+    /**
+     * @api {get} /user/loginWithTpId Use Third-party id to log in.
+     * @apiName loginWithTpId
+     * @apiGroup user
+     *
+     * @apiParam {String} tpId User's third-party
+     * id.
+     *
+     * @apiSuccessExample {json} Success-Response:
+     * {
+     *    "code": 0,
+     *    "data": {
+     *        "nickname": "jieying",
+     *        "id": 2,
+     *        "account": "jieyingx@andrew.cmu.edu"
+     *       }
+     * }
+     *
+     * @apiError {Json} 1 Lack input.
+     * @apiError {Json} 1 Input is empty string or whitespaces.
+     * @apiError {Json} 1 Third-party id not found in the records.
+     */
+    @Before(GET.class)
+    @ValidatePara(value = "tpId", validators = {NullValidator.class, EmptyStringValidator.class, TpRecordExistValidator.class})
+    public void loginWithTpId() {
+        String tpId = getPara("tpId");
+        int userId = TpUser.dao.findFirst("select * from tp_user where tp_id=?", tpId).getInt("user_id");
+        User myUser = User.dao.findById(userId);
+        if (myUser == null) {
+            errorResponse("User not found!");
+        } else {
+            myUser.remove("password");
+            successResponse(myUser);
+        }
+    }
+
+    /**
+     * @api {post} /user/bindGoogleIdWithUserId Bind Google id with user id.
+     * @apiName bindGoogleIdWithUserId
+     * @apiGroup user
+     *
+     * @apiParam {String} googleId User's Google id.
+     * @apiParam {String} userId User's user id.
+     *
+     * @apiSuccessExample {json} Success-Response:
+     * {
+     *    "code": 0,
+     *    "data": {
+     *        "nickname": "jieying",
+     *        "id": 2,
+     *        "account": "jieyingx@andrew.cmu.edu"
+     *       }
+     * }
+     * @apiError {Json} 1 Lack input parameters.
+     * @apiError {Json} 2 Input is empty string or whitespaces.
+     * @apiError {Json} 3 Input userId is not legal integer format.
+     * @apiError {Json} 3 User id not found in the records.
+     */
+    @Before(POST.class)
+    @ValidatePara(value = "googleId", validators = {NullValidator.class, EmptyStringValidator.class})
+    @ValidatePara(value = "userId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, UserRecordExistValidator.class})
+    public void bindGoogleIdWithUserId() {
+        String googleId = getPara("googleId");
+        int userId = Integer.parseInt(getPara("userId"));
+        TpUser newRecord = new TpUser();
+        newRecord.set("tp_id", googleId).set("user_id", userId).set("type", "google").save();
+        User myUser = User.dao.findById(userId);
+        successResponse(myUser.remove("password"));
     }
 }

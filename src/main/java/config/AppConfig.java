@@ -1,5 +1,6 @@
 package config;
 
+import controllers.CommodityController;
 import interceptors.ParaValidateInterceptor;
 import interceptors.ResponseInterceptor;
 import models.*;
@@ -29,6 +30,7 @@ public class AppConfig extends JFinalConfig {
     @Override
     public void configRoute(Routes me) {
         me.add("/user", UserController.class);
+        me.add("/commodity", CommodityController.class);
     }
 
     @Override

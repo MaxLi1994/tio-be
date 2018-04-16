@@ -22,8 +22,6 @@ public class BaseController extends Controller {
     }
 
     public void errorResponse(String message) {
-        System.out.println("BaseController 25");
-        System.out.println("errMsg: " + message);
         setAttr("msg", message);
         setAttr("code", CODE_ERROR);
     }
