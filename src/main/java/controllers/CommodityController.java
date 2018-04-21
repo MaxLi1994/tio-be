@@ -214,8 +214,19 @@ public class CommodityController extends BaseController {
      * @apiError {Msg} 5 User not found.
      * @apiError {Msg} 6 Record not exist.
      */
+    @Before(POST.class)
+    @ValidatePara(value = "commodityId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, CommodityRecordExistValidator.class})
+    @ValidatePara(value = "userId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, UserRecordExistValidator.class})
     public void delFavorite() {
-        
+        int userId = Integer.parseInt(getPara("userId"));
+        int commodityId = Integer.parseInt(getPara("commodityId"));
+        FavoriteList record = FavoriteList.dao.findFirst("select * from favorite_list where user_id = ? and commodity_id = ?", userId, commodityId);
+        if (record == null) {
+            errorResponse("Record not found");
+        } else {
+            record.delete();
+            successResponse("This commodity is successfully deleted from the user's favorite.");
+        }
     }
 
     /**
