@@ -3,11 +3,15 @@ package controllers;
 import annotations.ValidatePara;
 import com.jfinal.aop.Before;
 import com.jfinal.ext.interceptor.GET;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import models.Category;
 import models.Commodity;
+import models.FavoriteList;
 import validators.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Jieying Xu
@@ -125,7 +129,7 @@ public class CommodityController extends BaseController {
     }
 
     /**
-     * @api {post} /commodity/checkIsFavorite Check if the commodity is favorited by the user
+     * @api {get} /commodity/checkIsFavorite Check if the commodity is favorited by the user
      * @apiName checkIsFavorite
      * @apiGroup commodity
      *
@@ -142,8 +146,16 @@ public class CommodityController extends BaseController {
      * @apiError {Msg} 4 Commodity not found.
      * @apiError {Msg} 4 User not found.
      */
+    @Before(GET.class)
+    @ValidatePara(value = "commodityId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, CommodityRecordExistValidator.class})
+    @ValidatePara(value = "userId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, UserRecordExistValidator.class})
     public void checkIsFavorite() {
-
+        int userId = Integer.parseInt(getPara("userId"));
+        int commodityId = Integer.parseInt(getPara("commodityId"));
+        boolean favorited = (FavoriteList.dao.findFirst("select * from favorite_list where user_id = ? and commodity_id = ?", userId, commodityId) != null);
+        Map<String, Boolean> result = new HashMap<>();
+        result.put("favorited", favorited);
+        successResponse(result);
     }
 
     /**
