@@ -3,6 +3,8 @@ package controllers;
 import annotations.ValidatePara;
 import com.jfinal.aop.Before;
 import com.jfinal.ext.interceptor.GET;
+import com.jfinal.ext.interceptor.POST;
+import com.jfinal.plugin.activerecord.ActiveRecordException;
 import com.sun.org.apache.xpath.internal.operations.Bool;
 import models.Category;
 import models.Commodity;
@@ -177,8 +179,20 @@ public class CommodityController extends BaseController {
      * @apiError {Msg} 4 User not found.
      * @apiError {Msg} 5 Duplicate record.
      */
+    @Before(POST.class)
+    @ValidatePara(value = "commodityId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, CommodityRecordExistValidator.class})
+    @ValidatePara(value = "userId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, UserRecordExistValidator.class})
     public void addFavorite() {
-
+        int userId = Integer.parseInt(getPara("userId"));
+        int commodityId = Integer.parseInt(getPara("commodityId"));
+        FavoriteList newRecord = new FavoriteList();
+        newRecord.set("user_id", userId).set("commodity_id", commodityId);
+        try {
+            newRecord.save();
+            successResponse("This commodity is successfully added to the user's favorite.");
+        } catch (ActiveRecordException e) {
+            errorResponse("Duplicate record!");
+        }
     }
 
     /**
