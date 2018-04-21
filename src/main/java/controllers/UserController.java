@@ -1,8 +1,7 @@
 package controllers;
 
 import annotations.ValidatePara;
-import models.TpUser;
-import models.User;
+import models.*;
 import com.jfinal.aop.Before;
 import com.jfinal.ext.interceptor.GET;
 import com.jfinal.ext.interceptor.POST;
@@ -10,7 +9,9 @@ import validators.*;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
-
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
@@ -28,12 +29,9 @@ public class UserController extends BaseController {
      * @apiParam {String} password User password.
      * @apiSuccessExample {json} Success-Response:
      * {
-     *    "code": 0,
-     *    "data": {
-     *        "nickname": "jieying",
-     *        "id": 2,
-     *        "account": "jieyingx@andrew.cmu.edu"
-     *       }
+     *    "nickname": "jieying",
+     *    "id": 2,
+     *    "account": "jieyingx@andrew.cmu.edu"
      * }
      * @apiError {Msg} 1 User didn't complete all fields.
      * @apiError {Msg} 2 User input is empty string or whitespaces.
@@ -72,7 +70,7 @@ public class UserController extends BaseController {
     }
 
     /**
-     * @api {get} /user/login Check user info with database record to log in
+     * @api {get} /user/login Check user info before logging in
      * @apiName login
      * @apiGroup user
      *
@@ -81,12 +79,9 @@ public class UserController extends BaseController {
      *
      * @apiSuccessExample {json} Success-Response:
      * {
-     *    "code": 0,
-     *    "data": {
-     *        "nickname": "jieying",
-     *        "id": 2,
-     *        "account": "jieyingx@andrew.cmu.edu"
-     *       }
+     *    "nickname": "jieying",
+     *    "id": 2,
+     *    "account": "jieyingx@andrew.cmu.edu"
      * }
      * @apiError {Msg} 1 User didn't complete all fields.
      * @apiError {Msg} 2 User input is empty string or whitespaces.
@@ -108,7 +103,7 @@ public class UserController extends BaseController {
     }
 
     /**
-     * @api {post} /user/changeNickname Change nickname given user id.
+     * @api {post} /user/changeNickname Change user's nickname
      * @apiName changeNickname
      * @apiGroup user
      *
@@ -117,12 +112,9 @@ public class UserController extends BaseController {
      *
      * @apiSuccessExample {json} Success-Response:
      * {
-     *    "code": 0,
-     *    "data": {
-     *        "nickname": "jieying",
-     *        "id": 2,
-     *        "account": "jieyingx@andrew.cmu.edu"
-     *       }
+     *    "nickname": "jieying",
+     *    "id": 2,
+     *    "account": "jieyingx@andrew.cmu.edu"
      * }
      * @apiError {Json} 1 User didn't complete all fields.
      * @apiError {Json} 2 User input is empty string or whitespaces.
@@ -142,7 +134,7 @@ public class UserController extends BaseController {
     }
 
     /**
-     * @api {post} /user/changePassword Change password given user id.
+     * @api {post} /user/changePassword Change user's password
      * @apiName changePassword
      * @apiGroup user
      *
@@ -152,16 +144,16 @@ public class UserController extends BaseController {
      *
      * @apiSuccessExample {json} Success-Response:
      * {
-     *    "code": 0,
-     *    "msg": String
+     *    "nickname": "jieying",
+     *    "id": 2,
+     *    "account": "jieyingx@andrew.cmu.edu"
      * }
      *
      * @apiError {Json} 1 User didn't complete all fields.
      * @apiError {Json} 2 User input is empty string or whitespaces.
-     * @apiError {Json} 3 Provided user id is not found in the database.
-     * @apiError {Json} 4 userId must be an integer.
-     * @apiError {Json} 5 Provided user id is not found in the database.
-     * @apiError {Json} 6 User input old password is not compatible with database record.
+     * @apiError {Json} 3 userId must be an integer.
+     * @apiError {Json} 4 Provided user id is not found in the database.
+     * @apiError {Json} 5 User input old password is not compatible with database record.
      */
     @Before(POST.class)
     @ValidatePara(value = "userId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, UserRecordExistValidator.class})
@@ -183,72 +175,161 @@ public class UserController extends BaseController {
     }
 
     /**
-     * @api {get} /user/loginWithTpId Use Third-party id to log in.
+     * @api {get} /user/loginWithTpId Use Third-party id to log in
      * @apiName loginWithTpId
      * @apiGroup user
      *
-     * @apiParam {String} tpId User's third-party
-     * id.
+     * @apiParam {String} tpId User's third-party id.
+     * @apiParam {String} type The third-party service name.
      *
      * @apiSuccessExample {json} Success-Response:
      * {
-     *    "code": 0,
-     *    "data": {
-     *        "nickname": "jieying",
-     *        "id": 2,
-     *        "account": "jieyingx@andrew.cmu.edu"
-     *       }
+     *    "nickname": "jieying",
+     *    "id": 2,
+     *    "account": "jieyingx@andrew.cmu.edu"
      * }
      *
      * @apiError {Json} 1 Lack input.
      * @apiError {Json} 1 Input is empty string or whitespaces.
-     * @apiError {Json} 1 Third-party id not found in the records.
+     * @apiError {Json} 1 Third-party user not found in the records.
      */
     @Before(GET.class)
-    @ValidatePara(value = "tpId", validators = {NullValidator.class, EmptyStringValidator.class, TpRecordExistValidator.class})
+    @ValidatePara(value = "tpId", validators = {NullValidator.class, EmptyStringValidator.class})
+    @ValidatePara(value = "type", validators = {NullValidator.class, EmptyStringValidator.class, TpTypeValidator.class})
     public void loginWithTpId() {
         String tpId = getPara("tpId");
-        int userId = TpUser.dao.findFirst("select * from tp_user where tp_id=?", tpId).getInt("user_id");
-        User myUser = User.dao.findById(userId);
-        if (myUser == null) {
-            errorResponse("User not found!");
+        String type = getPara("type");
+        TpUser tpUser = TpUser.dao.findFirst("select * from tp_user where tp_id=? and type=?", tpId, type);
+        if (tpUser == null) {
+            errorResponse("Third-party user not found!");
         } else {
-            myUser.remove("password");
-            successResponse(myUser);
+            int userId = tpUser.getInt("user_id");
+            User myUser = User.dao.findById(userId);
+            if (myUser == null) {
+                errorResponse("User not found!");
+            } else {
+                myUser.remove("password");
+                successResponse(myUser);
+            }
         }
     }
 
     /**
-     * @api {post} /user/bindGoogleIdWithUserId Bind Google id with user id.
-     * @apiName bindGoogleIdWithUserId
+     * @api {post} /user/bindTpIdWithUserId Bind third-party id with user id
+     * @apiName bindTpIdWithUserId
      * @apiGroup user
      *
-     * @apiParam {String} googleId User's Google id.
+     * @apiParam {String} tpId User's third-party id.
+     * @apiParam {String} type User's third-party service type.
      * @apiParam {String} userId User's user id.
      *
      * @apiSuccessExample {json} Success-Response:
      * {
-     *    "code": 0,
-     *    "data": {
-     *        "nickname": "jieying",
-     *        "id": 2,
-     *        "account": "jieyingx@andrew.cmu.edu"
-     *       }
+     *    "nickname": "jieying",
+     *    "id": 2,
+     *    "account": "jieyingx@andrew.cmu.edu"
      * }
      * @apiError {Json} 1 Lack input parameters.
      * @apiError {Json} 2 Input is empty string or whitespaces.
      * @apiError {Json} 3 Input userId is not legal integer format.
-     * @apiError {Json} 3 User id not found in the records.
+     * @apiError {Json} 4 User not found.
+     * @apiError {Json} 5 User id and type combination already exists.
+     * @apiError {Json} 6 Third-party id already exists.
      */
     @Before(POST.class)
-    @ValidatePara(value = "googleId", validators = {NullValidator.class, EmptyStringValidator.class})
+    @ValidatePara(value = "tpId", validators = {NullValidator.class, EmptyStringValidator.class})
+    @ValidatePara(value = "type", validators = {NullValidator.class, EmptyStringValidator.class, TpTypeValidator.class})
     @ValidatePara(value = "userId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, UserRecordExistValidator.class})
-    public void bindGoogleIdWithUserId() {
-        String googleId = getPara("googleId");
+    public void bindTpIdWithUserId() {
+        String tpId = getPara("tpId");
+        String type = getPara("type");
         int userId = Integer.parseInt(getPara("userId"));
-        TpUser newRecord = new TpUser();
-        newRecord.set("tp_id", googleId).set("user_id", userId).set("type", "google").save();
-        User myUser = User.dao.findById(userId);
-        successResponse(myUser.remove("password"));
+        if (TpUser.dao.findFirst("select * from tp_user where type=? and user_id=?", type, userId) != null) {
+            errorResponse("User has already bind a " + type + " account!");
+        } else if (TpUser.dao.findFirst("select * from tp_user where tp_id=?", tpId) != null) {
+            errorResponse("This "+type+" account has been bind to an user!");
+        } else {
+            TpUser newRecord = new TpUser();
+            newRecord.set("tp_id", tpId).set("user_id", userId).set("type", type).save();
+            User myUser = User.dao.findById(userId);
+            successResponse(myUser.remove("password"));
+        }
+    }
+
+    /**
+     * @api {get} /favoriteList Display user's favorite list
+     * @apiName favoriteList
+     * @apiGroup user
+     *
+     * @apiParam {String} userId User's user id.
+     *
+     * @apiSuccessExample {json} Success-Response:
+     * [
+     *     {
+     *         "name": "Dior999",
+     *         "id": 1,
+     *         "desc_img": "www.exampleImageUrl.com"
+     *     },
+     *     {
+     *         "name": "YSL102",
+     *         "id": 2,
+     *         "desc_img": "www.exampleImageUrl.com"
+     *     }
+     * ]
+     * @apiError {Json} 1 Lack input parameters.
+     * @apiError {Json} 2 Input is empty string or whitespaces.
+     * @apiError {Json} 3 Input userId is not legal integer format.
+     * @apiError {Json} 4 User not found.
+     */
+    @Before(GET.class)
+    @ValidatePara(value = "userId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, UserRecordExistValidator.class})
+    public void favoriteList() {
+        int userId = Integer.parseInt(getPara("userId"));
+        List<FavoriteList> commodityIdList = FavoriteList.dao.find("select commodity_id from favorite_list where user_id = ?", userId);
+        List<Commodity> favoriteList = new ArrayList<Commodity>();
+        for (FavoriteList f: commodityIdList) {
+            int commodityId = f.getInt("commodity_id");
+            favoriteList.add(Commodity.dao.findByIdLoadColumns(commodityId, "name, id, desc_img"));
+        }
+        successResponse(favoriteList);
+    }
+
+    /**
+     * @api {get} /viewingHistory Display user's viewing history
+     * @apiName viewingHistory
+     * @apiGroup user
+     *
+     * @apiParam {String} userId User's user id.
+     *
+     * @apiSuccessExample {json} Success-Response:
+     * [
+     *     {
+     *         "name": "Dior999",
+     *         "id": 1,
+     *         "desc_img": "www.exampleImageUrl.com"
+     *     },
+     *     {
+     *         "name": "YSL102",
+     *         "id": 2,
+     *         "desc_img": "www.exampleImageUrl.com"
+     *     }
+     * ]
+     * @apiError {Json} 1 Lack input parameters.
+     * @apiError {Json} 2 Input is empty string or whitespaces.
+     * @apiError {Json} 3 Input userId is not legal integer format.
+     * @apiError {Json} 4 User not found.
+     */
+    @Before(GET.class)
+    @ValidatePara(value = "userId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, UserRecordExistValidator.class})
+    public void viewingHistory() {
+        int userId = Integer.parseInt(getPara("userId"));
+        List<ViewingHistory> commodityIdList = ViewingHistory.dao.find("select commodity_id from viewing_history where user_id = ?", userId);
+        Collections.sort(commodityIdList);
+        List<Commodity> viewedCommodities = new ArrayList<Commodity>();
+        for (ViewingHistory v: commodityIdList) {
+            int commodityId = v.getInt("commodity_id");
+            viewedCommodities.add(Commodity.dao.findByIdLoadColumns(commodityId, "name, id, desc_img"));
+        }
+        successResponse(viewedCommodities);
     }
 }
