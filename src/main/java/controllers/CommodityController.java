@@ -2,7 +2,6 @@ package controllers;
 
 import annotations.ValidatePara;
 import com.jfinal.aop.Before;
-import com.jfinal.aop.Interceptor;
 import com.jfinal.ext.interceptor.GET;
 import models.Category;
 import models.Commodity;
@@ -117,6 +116,8 @@ public class CommodityController extends BaseController {
      * @apiError {Msg} 3 Commodity id is not legal integer format.
      * @apiError {Msg} 4 Commodity not found.
      */
+    @Before(GET.class)
+    @ValidatePara(value = "commodityId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, CommodityRecordExistValidator.class})
     public void detail() {
 
     }
