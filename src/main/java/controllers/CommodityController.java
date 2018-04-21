@@ -122,6 +122,28 @@ public class CommodityController extends BaseController {
     }
 
     /**
+     * @api {post} /commodity/checkIsFavorite Check if the commodity is favorited by the user
+     * @apiName checkIsFavorite
+     * @apiGroup commodity
+     *
+     * @apiParam {String} commodityId The id of the commodity.
+     * @apiParam {String} userId The id of the user.
+     * @apiSuccessExample {json} Success-Response:
+     * {
+     *     "favorited": boolean
+     * }
+     *
+     * @apiError {Msg} 1 Lack input.
+     * @apiError {Msg} 2 Input is empty string or whitespaces.
+     * @apiError {Msg} 3 Id is not legal integer format.
+     * @apiError {Msg} 4 Commodity not found.
+     * @apiError {Msg} 4 User not found.
+     */
+    public void checkIsFavorite() {
+
+    }
+
+    /**
      * @api {post} /commodity/addFavorite Add the commodity to the user's favorite list
      * @apiName addFavorite
      * @apiGroup commodity
@@ -138,6 +160,7 @@ public class CommodityController extends BaseController {
      * @apiError {Msg} 3 Id is not legal integer format.
      * @apiError {Msg} 4 Commodity not found.
      * @apiError {Msg} 4 User not found.
+     * @apiError {Msg} 5 Duplicate record.
      */
     public void addFavorite() {
 
@@ -159,7 +182,8 @@ public class CommodityController extends BaseController {
      * @apiError {Msg} 2 Input is empty string or whitespaces.
      * @apiError {Msg} 3 Id is not legal integer format.
      * @apiError {Msg} 4 Commodity not found.
-     * @apiError {Msg} 4 User not found.
+     * @apiError {Msg} 5 User not found.
+     * @apiError {Msg} 6 Record not exist.
      */
     public void delFavorite() {
         

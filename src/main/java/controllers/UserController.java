@@ -257,7 +257,7 @@ public class UserController extends BaseController {
     }
 
     /**
-     * @api {get} /favoriteList Display user's favorite list
+     * @api {get} /user/favoriteList Display user's favorite list
      * @apiName favoriteList
      * @apiGroup user
      *
@@ -295,7 +295,7 @@ public class UserController extends BaseController {
     }
 
     /**
-     * @api {get} /viewingHistory Display user's viewing history
+     * @api {get} /user/viewingHistory Display user's viewing history
      * @apiName viewingHistory
      * @apiGroup user
      *
@@ -323,8 +323,7 @@ public class UserController extends BaseController {
     @ValidatePara(value = "userId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, UserRecordExistValidator.class})
     public void viewingHistory() {
         int userId = Integer.parseInt(getPara("userId"));
-        List<ViewingHistory> commodityIdList = ViewingHistory.dao.find("select commodity_id from viewing_history where user_id = ?", userId);
-        Collections.sort(commodityIdList);
+        List<ViewingHistory> commodityIdList = ViewingHistory.dao.find("select commodity_id from viewing_history where user_id = ? order by id desc", userId);
         List<Commodity> viewedCommodities = new ArrayList<Commodity>();
         for (ViewingHistory v: commodityIdList) {
             int commodityId = v.getInt("commodity_id");
