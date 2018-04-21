@@ -119,7 +119,9 @@ public class CommodityController extends BaseController {
     @Before(GET.class)
     @ValidatePara(value = "commodityId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, CommodityRecordExistValidator.class})
     public void detail() {
-
+        int commodityId = Integer.parseInt(getPara("commodityId"));
+        Commodity c = Commodity.dao.findById(commodityId);
+        successResponse(c);
     }
 
     /**
