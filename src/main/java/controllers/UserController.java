@@ -144,9 +144,7 @@ public class UserController extends BaseController {
      *
      * @apiSuccessExample {json} Success-Response:
      * {
-     *    "nickname": "jieying",
-     *    "id": 2,
-     *    "account": "jieyingx@andrew.cmu.edu"
+     *    "msg": ""Password successfully reset!"
      * }
      *
      * @apiError {Json} 1 User didn't complete all fields.
@@ -170,7 +168,7 @@ public class UserController extends BaseController {
             errorResponse("Password not compatible!");
         } else {
             myUser.set("password", newPassword).update();
-            successResponse("Password successfully reset!");
+            successResponse("msg", "Password successfully reset!");
         }
     }
 
@@ -323,7 +321,7 @@ public class UserController extends BaseController {
     @ValidatePara(value = "userId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, UserRecordExistValidator.class})
     public void viewingHistory() {
         int userId = Integer.parseInt(getPara("userId"));
-        List<ViewingHistory> commodityIdList = ViewingHistory.dao.find("select commodity_id from viewing_history where user_id = ? order by id desc", userId);
+        List<ViewingHistory> commodityIdList = ViewingHistory.dao.find("select commodity_id from viewing_history where user_id = ? order by create_time desc", userId);
         List<Commodity> viewedCommodities = new ArrayList<Commodity>();
         for (ViewingHistory v: commodityIdList) {
             int commodityId = v.getInt("commodity_id");

@@ -5,12 +5,13 @@ import com.jfinal.aop.Before;
 import com.jfinal.ext.interceptor.GET;
 import com.jfinal.ext.interceptor.POST;
 import com.jfinal.plugin.activerecord.ActiveRecordException;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import models.Category;
 import models.Commodity;
 import models.FavoriteList;
+import models.ViewingHistory;
 import validators.*;
 
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -155,9 +156,7 @@ public class CommodityController extends BaseController {
         int userId = Integer.parseInt(getPara("userId"));
         int commodityId = Integer.parseInt(getPara("commodityId"));
         boolean favorited = (FavoriteList.dao.findFirst("select * from favorite_list where user_id = ? and commodity_id = ?", userId, commodityId) != null);
-        Map<String, Boolean> result = new HashMap<>();
-        result.put("favorited", favorited);
-        successResponse(result);
+        successResponse("favorited", favorited);
     }
 
     /**
@@ -189,7 +188,7 @@ public class CommodityController extends BaseController {
         newRecord.set("user_id", userId).set("commodity_id", commodityId);
         try {
             newRecord.save();
-            successResponse("This commodity is successfully added to the user's favorite.");
+            successResponse("msg", "This commodity is successfully added to the user's favorite.");
         } catch (ActiveRecordException e) {
             errorResponse("Duplicate record!");
         }
@@ -225,7 +224,7 @@ public class CommodityController extends BaseController {
             errorResponse("Record not found");
         } else {
             record.delete();
-            successResponse("This commodity is successfully deleted from the user's favorite.");
+            successResponse("msg", "This commodity is successfully deleted from the user's favorite.");
         }
     }
 
@@ -247,7 +246,15 @@ public class CommodityController extends BaseController {
      * @apiError {Msg} 4 Commodity not found.
      * @apiError {Msg} 4 User not found.
      */
+    @Before(POST.class)
+    @ValidatePara(value = "commodityId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, CommodityRecordExistValidator.class})
+    @ValidatePara(value = "userId", validators = {NullValidator.class, EmptyStringValidator.class, IntegerFormatValidator.class, UserRecordExistValidator.class})
     public void addViewing() {
-
+        int commodityId = Integer.parseInt(getPara("commodityId"));
+        int userId = Integer.parseInt(getPara("userId"));
+        Timestamp create_time = new Timestamp(System.currentTimeMillis());
+        ViewingHistory newRecord = new ViewingHistory().set("commodity_id", commodityId).set("user_id", userId).set("create_time", create_time);
+        newRecord.save();
+        successResponse("msg", "This commodity is successfully added to the user's viewing history.");
     }
 }
