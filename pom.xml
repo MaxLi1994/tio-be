@@ -19,6 +19,34 @@
     <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 
+  <profiles>
+
+    <profile>
+      <!-- local development environment -->
+      <id>development</id>
+      <build>
+        <filters>
+          <filter>datasource_development.properties</filter>
+        </filters>
+      </build>
+      <activation>
+        <!-- default activate profile -->
+        <activeByDefault>true</activeByDefault>
+      </activation>
+    </profile>
+
+    <profile>
+      <!-- production environment -->
+      <id>production</id>
+      <build>
+        <filters>
+          <filter>datasource_production.properties</filter>
+        </filters>
+      </build>
+    </profile>
+
+  </profiles>
+
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -64,6 +92,14 @@
 
   <build>
     <finalName>tio_backend</finalName>
+
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
       <plugins>
         <plugin>
