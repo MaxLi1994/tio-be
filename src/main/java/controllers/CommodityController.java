@@ -27,22 +27,35 @@ public class CommodityController extends BaseController {
      * @apiGroup commodity
      *
      * @apiSuccessExample {json} Success-Response:
-     * [
-     *     {
-     *         "name": "Dior999",
-     *         "id": 1,
-     *         "desc_img": "www.exampleImageUrl.com"
-     *     },
-     *     {
-     *         "name": "YSL102",
-     *         "id": 2,
-     *         "desc_img": "www.exampleImageUrl.com"
-     *     }
-     * ]
+     *  [
+     *      {
+     *          "commodity_id": 1,
+     *          "commodity_desc_img": "www.exampleImageUrl.com",
+     *          "brand_name": "chanel",
+     *          "brand_logo": "www.example.com",
+     *          "brand_desc": "A French Luxury Brand.",
+     *          "commodity_name": "Dior999"
+     *      },
+     *      {
+     *          "commodity_id": 2,
+     *          "commodity_desc_img": "www.exampleImageUrl.com",
+     *          "brand_name": "chanel",
+     *          "brand_logo": "www.example.com",
+     *          "brand_desc": "A French Luxury Brand.",
+     *          "commodity_name": "YSL102"
+     *      }
+     *  ]
      */
     @Before(GET.class)
     public void listAll() {
-        List<Commodity> allCommodities = Commodity.dao.find("select id, desc_img, name from commodity");
+        String sql = "select c.id AS commodity_id, " +
+                "c.desc_img AS commodity_desc_img, " +
+                "c.name AS commodity_name, " +
+                "b.name AS brand_name, " +
+                "b.logo AS brand_logo, " +
+                "b.desc AS brand_desc " +
+                "from commodity c inner join brand b on c.brand_id = b.id";
+        List<Commodity> allCommodities = Commodity.dao.find(sql);
         successResponse(allCommodities);
     }
 
@@ -53,18 +66,18 @@ public class CommodityController extends BaseController {
      *
      * @apiParam {String} categoryName The name of the category.
      * @apiSuccessExample {json} Success-Response:
-     * [
-     *     {
-     *         "name": "Dior999",
-     *         "id": 1,
-     *         "desc_img": "www.exampleImageUrl.com"
-     *     },
-     *     {
-     *         "name": "YSL102",
-     *         "id": 2,
-     *         "desc_img": "www.exampleImageUrl.com"
-     *     }
-     * ]
+     *  [                                                                   
+     *      {                                                               
+     *          "commodity_id": 1,                                          
+     *          "commodity_desc_img": "www.exampleImageUrl.com",            
+     *          "brand_name": "chanel",                                     
+     *          "brand_logo": "www.example.com",                            
+     *          "brand_desc": "A French Luxury Brand.",                     
+     *          "commodity_name": "Dior999"                                 
+     *      },                                                              
+     *      {                                                               
+     *          "commodity_id": 2,                                          
+     *          "commodity_desc_img": "www.exampleImageUrl.com",            
      * @apiError {Msg} 1 Lack input.
      * @apiError {Msg} 2 Input is empty string or whitespaces.
      * @apiError {Msg} 3 Category name not found in the database.
@@ -74,7 +87,15 @@ public class CommodityController extends BaseController {
     public void list() {
         String name = getPara("categoryName");
         int categoryId = Category.dao.findFirst("select * from category where name = ?", name).getInt("id");
-        List<Commodity> data = Commodity.dao.find("select id, desc_img, name from commodity where category_id = ?", categoryId);
+        String sql = "select c.id AS commodity_id, " +
+                "c.desc_img AS commodity_desc_img, " +
+                "c.name AS commodity_name, " +
+                "b.name AS brand_name, " +
+                "b.logo AS brand_logo, " +
+                "b.desc AS brand_desc " +
+                "from commodity c inner join brand b on c.brand_id=b.id " +
+                "where category_id = ?";
+        List<Commodity> data = Commodity.dao.find(sql, categoryId);
         successResponse(data);
     }
 
