@@ -287,7 +287,15 @@ public class UserController extends BaseController {
         List<Commodity> favoriteList = new ArrayList<Commodity>();
         for (FavoriteList f: commodityIdList) {
             int commodityId = f.getInt("commodity_id");
-            favoriteList.add(Commodity.dao.findByIdLoadColumns(commodityId, "name, id, desc_img"));
+            String sql = "Select c.name as commodity_name," +
+                    "c.id as commodity_id," +
+                    "c.desc_img as commodity_desc_img," +
+                    "b.name as brand_name," +
+                    "b.logo as brand_logo," +
+                    "b.desc as brand_desc " +
+                    "from commodity c inner join brand b on c.brand_id = b.id " +
+                    "where c.id = ?";
+            favoriteList.add(Commodity.dao.findFirst(sql, commodityId));
         }
         successResponse(favoriteList);
     }
